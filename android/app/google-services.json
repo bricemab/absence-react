@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "374120489659",
+    "project_id": "absence-react",
+    "storage_bucket": "absence-react.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374120489659:android:f8e120e665543d889b7f9e",
+        "android_client_info": {
+          "package_name": "com.absencereactclean"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCo9OMSsNsIJlSwA6usJhKEm7Ti7UOYU4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

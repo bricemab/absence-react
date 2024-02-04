@@ -44,6 +44,8 @@ export default class RequestManager {
           resolve(data);
         })
         .catch(error => {
+          console.log("error")
+          console.log(error)
           resolve(error.response.data);
         });
     });

@@ -1,4 +1,4 @@
-import {ActivityIndicator, Image, Text, View} from 'react-native';
+import {ActivityIndicator, Image, NativeModules, Text, View} from 'react-native';
 import BaseLayout from '../../layout/BaseLayout';
 import {useEffect, useState} from 'react';
 import axios from 'axios';
@@ -80,6 +80,7 @@ const RegisterKeyPage = ({route, navigation}) => {
               tokenDecoded.currentUser.deviceKey;
             await Utils.setData('token', token);
             await Utils.setData('data', tokenDecoded.currentUser);
+            NativeModules.DevSettings.reload();
           }
         }
       }

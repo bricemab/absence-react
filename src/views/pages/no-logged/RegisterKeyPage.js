@@ -1,4 +1,10 @@
-import {ActivityIndicator, Image, NativeModules, Text, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  NativeModules,
+  Text,
+  View,
+} from 'react-native';
 import BaseLayout from '../../layout/BaseLayout';
 import {useEffect, useState} from 'react';
 import axios from 'axios';
@@ -9,6 +15,7 @@ import {jwtDecode} from 'jwt-decode';
 import BadFaceImage from '../../../assets/bad-face.png';
 import {UserErrors} from '../../../utils/CodeErrors';
 import 'core-js/stable/atob';
+import {UtilsTypes} from '../../../utils/types';
 
 const StateType = {
   REQUEST_PENDING: 'REQUEST_PENDING',
@@ -44,7 +51,6 @@ const RegisterKeyPage = ({route, navigation}) => {
           '/users/register',
           params,
         );
-        console.log(response);
         if (!response.success) {
           switch (response.error.code) {
             case UserErrors.KEY_NO_MATCH:
@@ -78,8 +84,8 @@ const RegisterKeyPage = ({route, navigation}) => {
               tokenDecoded.currentUser.userKey;
             axios.defaults.headers.get['x-device-token'] =
               tokenDecoded.currentUser.deviceKey;
-            await Utils.setData('token', token);
-            await Utils.setData('data', tokenDecoded.currentUser);
+            await Utils.setData(UtilsTypes.TOKEN, token);
+            await Utils.setData(UtilsTypes.DATA, tokenDecoded.currentUser);
             NativeModules.DevSettings.reload();
           }
         }

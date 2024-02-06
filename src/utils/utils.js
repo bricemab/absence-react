@@ -6,6 +6,7 @@ import config from '../config/config';
 import RequestManager from '../utils/RequestManager';
 import {jwtDecode} from 'jwt-decode';
 import 'core-js/stable/atob';
+import {UtilsTypes} from './types';
 
 const getDataFromKey = async key => {
   try {
@@ -25,6 +26,9 @@ const setData = async (key, data) => {
 export default {
   getDataFromKey,
   setData,
+  formatDef(dayjs) {
+    return dayjs.format('YYYY-MM-DD HH:mm:ss');
+  },
   jwtDecode: token => {
     return jwtDecode(token);
   },
@@ -36,7 +40,11 @@ export default {
   clearData(key) {
     return store.remove({key});
   },
-  clearAll() {
+  async clearAll() {
+    await this.clearData(UtilsTypes.LAST_NOTIFICATION);
+    await this.clearData(UtilsTypes.LAST_BG_NOTIFICATION);
+    await this.clearData(UtilsTypes.DATA);
+    await this.clearData(UtilsTypes.TOKEN);
     return store.clearMap();
   },
   buildHmacSha256Signature(parameters) {

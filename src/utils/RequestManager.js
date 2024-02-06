@@ -1,6 +1,8 @@
 import axios from 'axios';
 import config from '../config/config';
 import Global from '../utils/Global';
+import {err} from 'react-native-svg';
+import {UtilsErrors} from './CodeErrors';
 
 export default class RequestManager {
   static createAxiosInstance() {
@@ -44,9 +46,17 @@ export default class RequestManager {
           resolve(data);
         })
         .catch(error => {
-          console.log("error")
-          console.log(error)
-          resolve(error.response.data);
+          if (UtilsErrors.API_NOT_RESPONDING === error.toString()) {
+            resolve({
+              success: false,
+              error: {
+                code: UtilsErrors.API_NOT_RESPONDING_CODE,
+                message: 'API is not responding',
+              },
+            });
+          } else {
+            resolve(error);
+          }
         });
     });
   }

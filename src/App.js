@@ -1,5 +1,4 @@
-import {StyleSheet, Text, View} from 'react-native';
-import {Provider} from 'react-redux';
+import {StyleSheet, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
 import HomePage from './views/pages/logged/HomePage';
@@ -7,10 +6,9 @@ import RegisterPage from './views/pages/no-logged/RegisterPage';
 import RegisterKeyPage from './views/pages/no-logged/RegisterKeyPage';
 import AddDevicePage from './views/pages/logged/AddDevicePage';
 import {createContext, useEffect, useState} from 'react';
-import store from './store';
 import Utils from './utils/utils';
 import {jwtDecode} from 'jwt-decode';
-import {Roles} from './utils/types';
+import {Roles, UtilsTypes} from './utils/types';
 import BaseLayout from './views/layout/BaseLayout';
 
 const AuthContext = createContext(null);
@@ -58,37 +56,11 @@ export default function App() {
   const [token, setToken] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState(Roles.USER_ANONYMOUS);
-  // useEffect(() => {
-  //   const toDo = async () => {
-  //     const getToken = await Utils.getDataFromKey('token');
-  //     setToken(getToken);
-  //     try {
-  //       const tokenDecoded = jwtDecode(getToken) || {};
-  //       if (!tokenDecoded.currentUser) {
-  //         setIsLoggedIn(false);
-  //         setRole(Roles.USER_ANONYMOUS);
-  //         await Utils.clearAll();
-  //         return;
-  //       }
-  //       setIsLoggedIn(true);
-  //       setRole(tokenDecoded.currentUser.role);
-  //       await Utils.setData('token', getToken);
-  //       await Utils.setData('data', tokenDecoded);
-  //       setLoadingAuth(false);
-  //     } catch (e) {
-  //       setIsLoggedIn(false);
-  //       setRole(Roles.USER_ANONYMOUS);
-  //       await Utils.clearAll();
-  //       setLoadingAuth(false);
-  //     }
-  //   };
-  //   toDo();
-  // }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedToken = await Utils.getDataFromKey('token');
+        const storedToken = await Utils.getDataFromKey(UtilsTypes.TOKEN);
         setToken(storedToken);
         if (!storedToken) {
           throw new Error('No token found');

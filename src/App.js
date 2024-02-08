@@ -5,13 +5,13 @@ import HomePage from './views/pages/logged/HomePage';
 import RegisterPage from './views/pages/no-logged/RegisterPage';
 import RegisterKeyPage from './views/pages/no-logged/RegisterKeyPage';
 import AddDevicePage from './views/pages/logged/AddDevicePage';
-import {createContext, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import Utils from './utils/utils';
 import {jwtDecode} from 'jwt-decode';
 import {Roles, UtilsTypes} from './utils/types';
 import BaseLayout from './views/layout/BaseLayout';
-
-const AuthContext = createContext(null);
+import usePushNotification from './hooks/usePushNotification';
+import {LoadingProvider} from './contexts/LoadingScreenContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +52,7 @@ function renderLoggedOutScreens() {
 }
 
 export default function App() {
+  const {requestNotificationPermission} = usePushNotification();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [token, setToken] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -60,6 +61,7 @@ export default function App() {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        await requestNotificationPermission();
         const storedToken = await Utils.getDataFromKey(UtilsTypes.TOKEN);
         setToken(storedToken);
         if (!storedToken) {
@@ -80,19 +82,21 @@ export default function App() {
     };
 
     initializeAuth();
-  }, []);
+  }, [requestNotificationPermission]);
   return loadingAuth ? (
-    <BaseLayout>
-      <View />
-    </BaseLayout>
+    <LoadingProvider>
+      <BaseLayout>
+        <View />
+      </BaseLayout>
+    </LoadingProvider>
   ) : (
-    <AuthContext.Provider value={{isLoggedIn, setIsLoggedIn}}>
+    <LoadingProvider>
       <NavigationContainer>
         <Stack.Navigator>
           {isLoggedIn ? renderLoggedInScreens(role) : renderLoggedOutScreens()}
         </Stack.Navigator>
       </NavigationContainer>
-    </AuthContext.Provider>
+    </LoadingProvider>
   );
 }
 

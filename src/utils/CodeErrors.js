@@ -1,5 +1,6 @@
 export const UserErrors = {
   KEY_NO_MATCH: 'KEY_NO_MATCH',
+  NOT_CERTIFICATE_PENDING: 'NOT_CERTIFICATE_PENDING',
 };
 
 export const UtilsErrors = {

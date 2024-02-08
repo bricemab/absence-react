@@ -1,4 +1,4 @@
-import {NativeModules, View, AppState} from 'react-native';
+import {NativeModules, View, AppState, Pressable, Text} from 'react-native';
 import {useEffect, useState} from 'react';
 import usePushNotification, {
   manageNotificationsPending,
@@ -56,6 +56,19 @@ const LoggedLayout = ({children}) => {
         justifyContent: 'center',
         alignItems: 'center',
       }}>
+      <Pressable
+        style={{
+          position: 'absolute',
+          top: 10,
+          left: 10,
+          backgroundColor: 'red',
+        }}
+        onPress={async () => {
+          await Utils.clearAll();
+          NativeModules.DevSettings.reload();
+        }}>
+        <Text>Deco</Text>
+      </Pressable>
       <NotificationService />
       {children}
     </View>

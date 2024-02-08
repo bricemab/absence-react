@@ -3,6 +3,8 @@ import config from '../config/config';
 import Global from '../utils/Global';
 import {err} from 'react-native-svg';
 import {UtilsErrors} from './CodeErrors';
+import {UtilsTypes} from './types';
+import Store from '../store';
 
 export default class RequestManager {
   static createAxiosInstance() {
@@ -38,7 +40,22 @@ export default class RequestManager {
   }
 
   static executePost(url, params, specialConfig = {}) {
-    return new Promise((resolve, reject) => {
+    const getDataFromKey = async key => {
+      try {
+        return await Store.load({key});
+      } catch (e) {
+        return false;
+      }
+    };
+    return new Promise(async (resolve, reject) => {
+      const data = await getDataFromKey(UtilsTypes.DATA);
+      if (data && data.userKey && data.deviceKey) {
+        if (!specialConfig.headers) {
+          specialConfig.headers = {};
+        }
+        specialConfig.headers['x-device-token'] = data.deviceKey;
+        specialConfig.headers['x-user-token'] = data.userKey;
+      }
       Global.instanceAxios
         .post(url, params, specialConfig)
         .then(response => {
@@ -46,6 +63,7 @@ export default class RequestManager {
           resolve(data);
         })
         .catch(error => {
+          console.log(error);
           if (UtilsErrors.API_NOT_RESPONDING === error.toString()) {
             resolve({
               success: false,

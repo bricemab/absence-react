@@ -3,22 +3,26 @@ import {NativeModules, PermissionsAndroid, Platform} from 'react-native';
 import {NotificationCodes, UtilsTypes} from '../utils/types';
 import Utils from '../utils/utils';
 import dayjs from 'dayjs';
+import {request, check, PERMISSIONS} from 'react-native-permissions';
 
 const usePushNotification = () => {
+  const requestNotificationPermission = async () => {
+    const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
+    return result;
+  };
+
+  const checkNotificationPermission = async () => {
+    const result = await check(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
+    return result;
+  };
   const requestPermission = async () => {
     const authStatus = await messaging().requestPermission();
-    if (Platform.OS === 'ios') {
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-      if (enabled) {
-        console.log('Authorization status:', authStatus);
-      }
-    } else if (Platform.OS === 'android') {
-      const res = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      );
+    if (enabled) {
+      console.log('Authorization status:', authStatus);
     }
   };
 
@@ -27,6 +31,8 @@ const usePushNotification = () => {
   };
 
   return {
+    checkNotificationPermission,
+    requestNotificationPermission,
     requestPermission,
     hasPermission,
   };

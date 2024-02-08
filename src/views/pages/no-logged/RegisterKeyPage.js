@@ -7,7 +7,6 @@ import {
 } from 'react-native';
 import BaseLayout from '../../layout/BaseLayout';
 import {useEffect, useState} from 'react';
-import axios from 'axios';
 import {StyleSheet} from 'react-native';
 import Utils from '../../../utils/utils';
 import DeviceInfo from 'react-native-device-info';
@@ -16,6 +15,9 @@ import BadFaceImage from '../../../assets/bad-face.png';
 import {UserErrors} from '../../../utils/CodeErrors';
 import 'core-js/stable/atob';
 import {UtilsTypes} from '../../../utils/types';
+import messaging from '@react-native-firebase/messaging';
+import usePushNotification from '../../../hooks/usePushNotification';
+import Global from '../../../utils/Global';
 
 const StateType = {
   REQUEST_PENDING: 'REQUEST_PENDING',
@@ -24,6 +26,7 @@ const StateType = {
 };
 
 const RegisterKeyPage = ({route, navigation}) => {
+  const {checkNotificationPermission} = usePushNotification();
   const [key, setKey] = useState('');
   const [state, setState] = useState(StateType.REQUEST_PENDING);
   const [params, setParams] = useState({});
@@ -38,6 +41,7 @@ const RegisterKeyPage = ({route, navigation}) => {
         model: DeviceInfo.getModel(),
         version: DeviceInfo.getSystemVersion(),
         os: DeviceInfo.getSystemName(),
+        apnsToken: await messaging().getToken(),
       });
     };
     toDo().then();
@@ -71,18 +75,18 @@ const RegisterKeyPage = ({route, navigation}) => {
         const {token, userSession} = data;
 
         if (data && token) {
-          console.log('==============');
           const tokenDecoded = Utils.jwtDecode(token) || {};
+          console.log('==============');
           console.log(tokenDecoded);
 
           if (tokenDecoded.currentUser) {
-            axios.defaults.headers.common['x-user-token'] =
+            Global.instanceAxios.defaults.headers.common['x-user-token'] =
               tokenDecoded.currentUser.userKey;
-            axios.defaults.headers.common['x-device-token'] =
+            Global.instanceAxios.defaults.headers.common['x-device-token'] =
               tokenDecoded.currentUser.deviceKey;
-            axios.defaults.headers.get['x-user-token'] =
+            Global.instanceAxios.defaults.headers.get['x-user-token'] =
               tokenDecoded.currentUser.userKey;
-            axios.defaults.headers.get['x-device-token'] =
+            Global.instanceAxios.defaults.headers.get['x-device-token'] =
               tokenDecoded.currentUser.deviceKey;
             await Utils.setData(UtilsTypes.TOKEN, token);
             await Utils.setData(UtilsTypes.DATA, tokenDecoded.currentUser);

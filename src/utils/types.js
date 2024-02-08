@@ -9,6 +9,8 @@ export const UtilsTypes = {
   LAST_NOTIFICATION: 'last-notification',
   TOKEN: 'token',
   DATA: 'data',
+  CERTIFICATES: 'certificates',
+  CURRENT_CERTIFICATE: 'current-certificate',
 };
 
 export const NotificationCodes = {

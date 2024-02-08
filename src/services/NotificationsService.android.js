@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import messaging from '@react-native-firebase/messaging';
 import PushNotification from 'react-native-push-notification';
 import {handleForegroundNotification} from '../hooks/usePushNotification';
+import Utils from '../utils/utils';
 PushNotification.createChannel(
   {
     channelId: 'channel-id', // (required)
@@ -16,6 +17,9 @@ PushNotification.createChannel(
 );
 const NotificationService = props => {
   useEffect(() => {
+    messaging().onTokenRefresh(async newToken => {
+      await Utils.postEncodedToBackend('/users/refresh-token', {newToken});
+    });
     messaging().onMessage(async remoteMessage => {
       console.log('Message handled in the App!', remoteMessage);
       const notification = {

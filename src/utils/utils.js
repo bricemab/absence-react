@@ -1,5 +1,6 @@
 import Store from '../store';
 import store from '../store';
+import 'react-native-get-random-values';
 import * as CryptoJS from 'crypto-js';
 import qs from 'qs';
 import config from '../config/config';
@@ -7,6 +8,8 @@ import RequestManager from '../utils/RequestManager';
 import {jwtDecode} from 'jwt-decode';
 import 'core-js/stable/atob';
 import {UtilsTypes} from './types';
+import dayjs from 'dayjs';
+import {Utils} from '@react-native-firebase/app';
 
 const getDataFromKey = async key => {
   try {
@@ -24,6 +27,33 @@ const setData = async (key, data) => {
 };
 
 export default {
+  generateQrCodeData: (userKey, deviceKey, certificateKey) => {
+    try {
+      const sep = config.qrCodeEncryptSeparator;
+      const plainText = `${userKey}${sep}${deviceKey}${sep}${certificateKey}${sep}${dayjs().format(
+        'YYYY-MM-DD HH:mm:ss',
+      )}`;
+      const key = deviceKey;
+      const encrypted = CryptoJS.AES.encrypt(plainText, key).toString();
+      const secondText = `${key}${sep}${encrypted}`;
+      return CryptoJS.AES.encrypt(
+        secondText,
+        config.qrCodeEncryptKey,
+      ).toString();
+    } catch (e) {
+      console.log(e);
+    }
+  },
+  decryptData: ciphertext => {
+    const bytesOri = CryptoJS.AES.decrypt(ciphertext, config.qrCodeEncryptKey);
+    const secondText = bytesOri.toString(CryptoJS.enc.Utf8);
+    const [deviceKey, encrypted] = secondText.split(
+      config.qrCodeEncryptSeparator,
+    );
+    const bytes = CryptoJS.AES.decrypt(encrypted, deviceKey);
+    const original = bytes.toString(CryptoJS.enc.Utf8);
+    return original.split(config.qrCodeEncryptSeparator);
+  },
   getDataFromKey,
   setData,
   formatDef(dayjs) {

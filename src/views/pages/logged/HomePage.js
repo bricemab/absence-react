@@ -16,54 +16,136 @@ import EntryImage from '../../../assets/entry-green.png';
 import NetInfo, {useNetInfo} from '@react-native-community/netinfo';
 import LoggedLayout from '../../layout/LoggedLayout';
 import {UtilsTypes} from '../../../utils/types';
+import {useLoading} from '../../../contexts/LoadingScreenContext';
+import {UserErrors} from '../../../utils/CodeErrors';
 
 const HomePage = ({navigation}) => {
   const [client, setClient] = useState('');
   const [qrcodeValue, setQrcodeValue] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const netInfo = useNetInfo();
+  const [isConnected, setIsConnected] = useState(false);
+  const [hasCertificate, setHasCertificate] = useState(true);
+  const {isConnected: isConnectedRn} = useNetInfo();
+  const {setIsLoading} = useLoading();
+
+  const fetchDataOnline = async () => {
+    const response = await Utils.postEncodedToBackend('/certificates/load', {});
+    if (response.success) {
+      const certificate = response.data.certificate;
+      await Utils.setData(UtilsTypes.CURRENT_CERTIFICATE, certificate);
+      setHasCertificate(true);
+    } else {
+      if (response.error.code === UserErrors.NOT_CERTIFICATE_PENDING) {
+        setHasCertificate(false);
+        await Utils.clearData(UtilsTypes.CURRENT_CERTIFICATE);
+      }
+      console.log('ERROR ON LOAD CERTIFICATES DATA');
+    }
+    console.log(response);
+  };
+
+  const fetchDataOffline = async () => {
+    const certificate = await Utils.getDataFromKey(
+      UtilsTypes.CURRENT_CERTIFICATE,
+    );
+    setToDate(dayjs(certificate.toDate).format('DD.MM.YYYY'));
+    setFromDate(dayjs(certificate.fromDate).format('DD.MM.YYYY'));
+  };
+
+  const checkIfConnected = async () => {
+    return new Promise(resolve => {
+      NetInfo.fetch().then(async connectionInfo => {
+        resolve(setIsConnected(connectionInfo.isConnected));
+      });
+    });
+  };
+
+  const updateQrCode = async () => {
+    const data = await Utils.getDataFromKey(UtilsTypes.DATA);
+    const certificate = await Utils.getDataFromKey(
+      UtilsTypes.CURRENT_CERTIFICATE,
+    );
+    if (
+      dayjs(certificate.fromDate).format('YYYY-MM-DD HH:mm:ss') >
+      dayjs().format('YYYY-MM-DD HH:mm:ss')
+    ) {
+      await Utils.clearData(UtilsTypes.CURRENT_CERTIFICATE);
+    } else {
+      const encrypted = Utils.generateQrCodeData(
+        data.userKey,
+        data.deviceKey,
+        certificate.key,
+      );
+      setQrcodeValue(encrypted);
+    }
+  };
+
+  const updateData = async () => {
+    setIsLoading(true);
+    await checkIfConnected();
+    if (isConnected) {
+      await fetchDataOnline();
+    } else {
+      await fetchDataOffline();
+    }
+    const data = await Utils.getDataFromKey(UtilsTypes.DATA);
+    const certificate = await Utils.getDataFromKey(
+      UtilsTypes.CURRENT_CERTIFICATE,
+    );
+    setClient(data.client);
+    setToDate(dayjs(certificate.toDate).format('DD.MM.YYYY'));
+    setFromDate(dayjs(certificate.fromDate).format('DD.MM.YYYY'));
+    await updateQrCode();
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     const setup = async () => {
-      const data = await Utils.getDataFromKey(UtilsTypes.DATA);
-      setClient(data.client);
-      setQrcodeValue(
-        'e3VzZXJLZXk6IjJEMXRIMmZ6ek53ejM0dUkzYmZWZ0FIOThMZ2RmQkZBQ2RiVU53V0Y0enM1V21UekpBIiwgZGV2aWNlS2V5OiJ6aFJ6aHg3QVRwemRlcVI3TWN5dmdLZmdDMnByRXk3UldsSXRSZE56Vm1oM3VMU09NNSIsIHRpbWU6ICIyMDI0LTAyLTA0MDI6MDI6MDIifQ==',
-      );
-      setToDate(dayjs().format('DD.MM.YYYY'));
-      setFromDate(dayjs().format('DD.MM.YYYY'));
+      await updateData();
     };
     setup().then();
-  }, []);
-  useEffect(() => {
-    // console.log('CONNEXION');
-    // console.log(netInfo.type);
-    // console.log('isInternetReachable' + netInfo.isInternetReachable);
-    // console.log(netInfo.details);
-    // const unsubscribe = NetInfo.addEventListener(state => {
-    //   console.log('Connection type', state.type);
-    //   console.log('Is isInternetReachable?', netInfo.isInternetReachable);
-    // });
-  }, [netInfo]);
+    const intervalId = setInterval(async () => {
+      if (hasCertificate) {
+        await updateQrCode();
+      }
+    }, 10 * 1000);
+    return () => clearInterval(intervalId);
+  }, [isConnected]);
   return (
     <BaseLayout>
       <LoggedLayout>
         <View style={styles.container}>
-          <Text style={styles.title}>Certificats d'asbences</Text>
+          <Text style={styles.title}>Certificat d'absence</Text>
           <Text style={styles.client}>{client}</Text>
-          <View style={styles.qrcode}>
-            {qrcodeValue !== '' ? (
-              <QRCode size={width - 80} value={qrcodeValue} />
-            ) : (
-              <></>
-            )}
-          </View>
+          {hasCertificate ? (
+            <View style={styles.qrcode}>
+              {qrcodeValue !== '' ? (
+                <QRCode size={width - 80} value={qrcodeValue} />
+              ) : (
+                <></>
+              )}
+            </View>
+          ) : (
+            <View style={styles.noQrCode}>
+              <Text style={styles.noQrCodeText}>Aucun certificat</Text>
+            </View>
+          )}
           <View style={styles.datesContainer}>
-            <Text style={styles.dates}>Établie le {fromDate}</Text>
-            <Text style={styles.dates}>Jusqu'au {toDate}</Text>
+            <Text style={styles.dates}>
+              Établie le {hasCertificate ? fromDate : '--'}
+            </Text>
+            <Text style={styles.dates}>
+              Jusqu'au {hasCertificate ? toDate : '--'}
+            </Text>
           </View>
-          <Pressable style={styles.buttons} onPress={() => {}}>
+          <Pressable
+            style={styles.buttons}
+            onPress={async () => {
+              console.log('Pressable onPress exécuté');
+              setIsLoading(true);
+              await updateData();
+            }}>
             <Text style={styles.btnText}>Actualiser</Text>
           </Pressable>
           <Text style={styles.historyText}>Historique</Text>
@@ -181,6 +263,21 @@ const styles = StyleSheet.create({
   historyItemText: {
     color: '#000',
     fontWeight: '400',
+  },
+  noQrCode: {
+    marginTop: 10,
+    marginBottom: 10,
+    height: width - 80,
+    width: width - 80,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  noQrCodeText: {
+    color: 'black',
+    fontWeight: '500',
+    textAlign: 'center',
+    fontSize: 20,
   },
   text: {
     fontSize: 20,

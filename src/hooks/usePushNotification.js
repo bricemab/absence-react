@@ -71,6 +71,7 @@ export const handleBackgroundNotification = async notification => {
       console.log('DECO LE GARS ICI');
       break;
     default:
+      console.log(notification)
       break;
   }
 };
